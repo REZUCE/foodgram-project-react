@@ -8,7 +8,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'my-default-secret-key')
 
 DEBUG = True
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+# Чтобы бэк принимал запросы из nginx добавили host.docker.internal
+ALLOWED_HOSTS = ['127.0.0.1', 'host.docker.internal', 'localhost', 'backend']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -17,6 +18,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'djoser',
+    'api.apps.ApiConfig',
+    'recipes.apps.RecipesConfig'
 ]
 
 MIDDLEWARE = [
@@ -82,3 +88,13 @@ USE_TZ = os.getenv('USE_TZ', 'True') == 'True'
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+}

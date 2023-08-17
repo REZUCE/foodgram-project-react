@@ -1,7 +1,9 @@
-from django.shortcuts import render
 from djoser.views import UserViewSet
-from django.shortcuts import render, HttpResponse
+from rest_framework.response import Response
+from rest_framework import views
+from users.models import CustomUser
 
 
 class CustomUserViewSet(UserViewSet):
-    pass
+    queryset = CustomUser
+    serializer_class = CustomUser

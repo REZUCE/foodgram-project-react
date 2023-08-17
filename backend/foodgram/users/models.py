@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from .validators import validate_username
+from django.core.exceptions import ValidationError
 
 
 class CustomUser(AbstractUser):
@@ -14,7 +16,8 @@ class CustomUser(AbstractUser):
     username = models.CharField(
         verbose_name='Уникальный юзернейм',
         max_length=150,
-        unique=True
+        unique=True,
+        validators=[validate_username]
     )
     first_name = models.CharField(
         verbose_name='Имя',
@@ -40,5 +43,40 @@ class CustomUser(AbstractUser):
         verbose_name_plural = 'Пользователи'
         ordering = ("username",)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.username}: {self.email}"
+
+
+class Subscription(models.Model):
+    """Модель подписок."""
+
+    user = models.ForeignKey(
+        to=CustomUser,
+        verbose_name='Подписчик',
+        related_name='followers',
+        on_delete=models.CASCADE
+    )
+    author = models.ForeignKey(
+        to=CustomUser,
+        verbose_name='Автор',
+        related_name='author',
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_name_owner',
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.user.username} подписан на {self.author.username}'
+
+    #  Это дополнительный метод, который срабатывает перед сохранением
+    def clean(self):
+        if self.user == self.author:
+                raise ValidationError("На себя нельзя подписаться!")

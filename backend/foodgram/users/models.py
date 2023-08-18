@@ -76,7 +76,10 @@ class Subscription(models.Model):
     def __str__(self) -> str:
         return f'{self.user.username} подписан на {self.author.username}'
 
-    #  Это дополнительный метод, который срабатывает перед сохранением
     def clean(self):
+        """
+        Это дополнительный метод,
+        который срабатывает перед сохранением.
+        """
         if self.user == self.author:
-                raise ValidationError("На себя нельзя подписаться!")
+            raise ValidationError("На себя нельзя подписаться!")

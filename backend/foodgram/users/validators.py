@@ -3,7 +3,7 @@ from re import match
 
 
 def validate_username(value):
-    pattern = r'^[\w.@+-]+\z'
+    pattern = r'^[\w.@+-]+$'
     if not match(pattern, value):
         raise ValidationError(
             "Имя пользователя может содержать только буквы, "

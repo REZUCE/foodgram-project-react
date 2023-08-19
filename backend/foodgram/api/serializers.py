@@ -34,9 +34,20 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         )
 
     def get_is_subscribed(self, obj):
+        """
+        Дополнительное поле, которое
+        никак не взаимодействует с базой данных.
+        """
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
+        # obj - это сериализуемый пользователь
         return Subscription.objects.filter(
             user=request.user, author=obj
         ).exists()
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ('author',)

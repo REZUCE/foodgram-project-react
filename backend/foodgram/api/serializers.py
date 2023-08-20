@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from django.contrib.auth import get_user_model
 from users.models import CustomUser, Subscription
+from recipes.models import Tag, Recipe
 
 
 class CustomUserSerializer(UserSerializer):
@@ -51,3 +52,19 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = ('author',)
+
+
+class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор модели тег."""
+
+    class Meta:
+        model = Tag
+        fields = ('id', 'name', 'color', 'slug')
+
+
+class RecipesSerializer(serializers.ModelSerializer):
+    """Сериализатор модели рецепт."""
+
+    class Meta:
+        model = Recipe
+        fields = '__all__'

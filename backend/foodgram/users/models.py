@@ -81,5 +81,6 @@ class Subscription(models.Model):
         Это дополнительный метод,
         который срабатывает перед сохранением.
         """
+
         if self.user == self.author:
             raise ValidationError("На себя нельзя подписаться!")

@@ -18,3 +18,10 @@ def validate_cooking_time(value):
             'Время приготовления должно быть положительным числом '
             'и меньше 2 часов (120 минут).'
         )
+
+
+def validate_recipe_ingredient(value):
+    if not 100 >= value >= 1:
+        raise ValidationError(
+            'Значение не должно быть меньше 1 или больше 100.'
+        )

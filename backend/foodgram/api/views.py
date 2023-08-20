@@ -43,6 +43,6 @@ class TagViewSet(ModelViewSet):
     serializer_class = TagSerializer
 
 
-class RecipesViewSet(ModelViewSet):
+class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer

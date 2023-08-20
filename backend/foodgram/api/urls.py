@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import TagViewSet, RecipesViewSet, CustomUserViewSet
+from .views import TagViewSet, RecipeViewSet, CustomUserViewSet
 
 
 app_name = 'api'
@@ -10,7 +10,7 @@ router = DefaultRouter()
 # Создаем необходимый набор эндпоинтов
 router.register('users', CustomUserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
-router.register('recipes', RecipesViewSet, basename='recipes')
+router.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
     # Подключение эндпоинтов из router

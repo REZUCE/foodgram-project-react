@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from django.contrib.auth import get_user_model
 from users.models import CustomUser, Subscription
-from recipes.models import Tag, Recipe
+from recipes.models import Tag, Recipe, RecipeIngredient
 
 
 class CustomUserSerializer(UserSerializer):
@@ -62,8 +62,25 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'color', 'slug')
 
 
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор модели M2M рецепты и ингридиенты."""
+
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
 class RecipesSerializer(serializers.ModelSerializer):
     """Сериализатор модели рецепт."""
+
+    tags = TagSerializer(many=True)
+    # Получай ингредиенты из связанной модели
+    ingredients = RecipeIngredientSerializer(many=True, source='recipeingredient_set')
 
     class Meta:
         model = Recipe

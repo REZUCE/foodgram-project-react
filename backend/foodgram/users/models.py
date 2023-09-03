@@ -64,8 +64,8 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
+        verbose_name = 'M2M Подписка'
+        verbose_name_plural = 'M2M Подписки'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'],
@@ -81,6 +81,5 @@ class Subscription(models.Model):
         Это дополнительный метод,
         который срабатывает перед сохранением.
         """
-
         if self.user == self.author:
             raise ValidationError("На себя нельзя подписаться!")

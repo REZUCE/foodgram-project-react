@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.db.models import UniqueConstraint
 from django.contrib.auth import get_user_model
 from .validators import (
     validate_slug,
@@ -7,6 +7,32 @@ from .validators import (
     validate_recipe_ingredient)
 
 User = get_user_model()
+
+
+class Ingredient(models.Model):
+    """Модель Ингредиентов."""
+
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=200
+    )
+    measurement_unit = models.CharField(
+        verbose_name='Единицы измерение',
+        max_length=200
+    )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='name_measurement_unit_unique'
+            )
+        ]
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+
+    def __str__(self) -> str:
+        return f"{self.name} - вес в  {self.measurement_unit}"
 
 
 class Tag(models.Model):
@@ -39,7 +65,8 @@ class Recipe(models.Model):
 
     tags = models.ManyToManyField(
         to=Tag,
-        verbose_name='Список тегов'
+        verbose_name='Теги',
+        through='RecipeTag',
     )
     author = models.ForeignKey(
         to=User,
@@ -47,19 +74,21 @@ class Recipe(models.Model):
         on_delete=models.CASCADE
     )
     ingredients = models.ManyToManyField(
-        to='Ingredient',
+        to=Ingredient,
+        verbose_name='Ингридиенты',
         # Но при этом нам нужно, чтобы ингредиенты
         # относились именно к этому рецепту
         through='RecipeIngredient',
-        verbose_name='Ингридиенты'
+
     )
-    # is_favorited
-    # is_in_shopping_cart
+    image = models.ImageField(
+        verbose_name='Изображение',
+        upload_to='recipes/images/'
+    )
     name = models.CharField(
         verbose_name='Название',
         max_length=200
     )
-    # image
     text = models.TextField(
         verbose_name='Описание'
     )
@@ -71,29 +100,11 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        # В порядке убывания
+        ordering = ['-id']
 
     def __str__(self) -> str:
         return f"{self.name}"
-
-
-class Ingredient(models.Model):
-    """Модель Ингредиентов."""
-
-    name = models.CharField(
-        verbose_name='Название',
-        max_length=200
-    )
-    measurement_unit = models.CharField(
-        verbose_name='Измерение',
-        max_length=200
-    )
-
-    class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
-
-    def __str__(self) -> str:
-        return f"{self.name} - вес в  {self.measurement_unit}"
 
 
 class RecipeIngredient(models.Model):
@@ -102,6 +113,7 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         to=Recipe,
         verbose_name='Рецепт',
+        related_name='recipe_ingredients',
         on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(
@@ -115,8 +127,106 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=('recipe', 'ingredient'),
+                name='recipe_ingredient_unique'
+            )
+        ]
         verbose_name = 'M2M RecipeIngredient'
         verbose_name_plural = 'M2M RecipesIngredients'
 
     def __str__(self) -> str:
         return f"{self.recipe} {self.ingredient}"
+
+
+class RecipeTag(models.Model):
+    """Связь M2M Recipe модели и Tag"""
+
+    recipe = models.ForeignKey(
+        to=Recipe,
+        verbose_name='Рецепт',
+        related_name='recipe_tags',
+        on_delete=models.CASCADE
+
+    )
+    tag = models.ForeignKey(
+        to=Tag,
+        verbose_name='Тег',
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=('recipe', 'tag'),
+                name='recipe_tag_unique'
+            )
+        ]
+        verbose_name = 'M2M RecipeTag'
+        verbose_name_plural = 'M2M RecipeTag'
+
+    def __str__(self) -> str:
+        return f"{self.recipe} {self.tag}"
+
+
+class ShoppingCart(models.Model):
+    """Модель корзины."""
+
+    user = models.ForeignKey(
+        to=User,
+        verbose_name='Пользователь',
+        related_name='shopping_cart',
+        on_delete=models.CASCADE,
+
+    )
+    recipe = models.ForeignKey(
+        to=Recipe,
+        verbose_name='Рецепт',
+        related_name='shopping_cart',
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='shopping_cart_recipe_user'
+            )
+        ]
+        verbose_name = 'M2M RecipeUserShoppingCart'
+        verbose_name_plural = 'M2M RecipeUserShoppingCart'
+
+    def __str__(self) -> str:
+        return f"{self.recipe} - {self.user}"
+
+
+class Favorite(models.Model):
+    """Модель избранного."""
+
+    user = models.ForeignKey(
+        to=User,
+        verbose_name='Пользователь',
+        related_name='favorites',
+        on_delete=models.CASCADE,
+
+    )
+    recipe = models.ForeignKey(
+        to=Recipe,
+        verbose_name='Рецепт',
+        related_name='favorites',
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='favorite_recipe_user'
+            )
+        ]
+        verbose_name = 'M2M Избранный'
+        verbose_name_plural = 'M2M Избранные'
+
+    def __str__(self) -> str:
+        return f"{self.recipe} - {self.user}"

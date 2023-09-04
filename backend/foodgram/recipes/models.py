@@ -81,10 +81,10 @@ class Recipe(models.Model):
         through='RecipeIngredient',
 
     )
-    # image = models.ImageField(
-    #     verbose_name='Изображение',
-    #     upload_to='recipes/images/'
-    # )
+    image = models.ImageField(
+        verbose_name='Изображение',
+        upload_to='recipes/images/'
+    )
     name = models.CharField(
         verbose_name='Название',
         max_length=200

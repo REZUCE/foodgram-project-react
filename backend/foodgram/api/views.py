@@ -2,18 +2,21 @@ from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
 from rest_framework.decorators import action
-from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import (
     IsAuthenticated,
     AllowAny
 )
+from django_filters.rest_framework import DjangoFilterBackend
+
+from rest_framework.filters import SearchFilter
 
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.contrib.auth import get_user_model
 from users.models import Subscription
 from recipes.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
+from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import TagSerializer, RecipesSerializer, RecipeCreateSerializer, \
@@ -25,8 +28,8 @@ User = get_user_model()
 class CustomUserViewSet(UserViewSet):
     print('password')
     serializer_class = User
-    # pagination_class = CustomPagination
-    # permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    pagination_class = CustomPagination
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     @action(
         methods=("get",),
@@ -66,12 +69,16 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (AllowAny,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('^name',)
 
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     # def dispatch(self, request, *args, **kwargs):
     #     res = super().dispatch(request, *args, **kwargs)

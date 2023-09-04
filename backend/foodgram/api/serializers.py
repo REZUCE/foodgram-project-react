@@ -2,10 +2,11 @@ from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from django.contrib.auth import get_user_model
-# from drf_extra_fields.fields import Base64ImageField
+from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from users.models import CustomUser, Subscription
 from recipes.models import Tag, Recipe, RecipeIngredient, Ingredient, RecipeTag, Favorite, ShoppingCart
+import webcolors
 
 User = get_user_model()
 
@@ -106,8 +107,35 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         }).data
 
 
+class Hex2NameColor(serializers.Field):
+    """
+    Собственный тип суриализатора.
+    В режиме записи конвертирует код цвета в его название,
+    В режиме чтения вернёт название цвета из БД.
+    """
+
+    # При чтении данных ничего не меняем - просто возвращаем как есть
+    def to_representation(self, value):
+        return value
+
+    # При записи код цвета конвертируется в его название
+    def to_internal_value(self, data):
+        # Доверяй, но проверяй
+        try:
+            # Если имя цвета существует, то конвертируем код в название.
+            # data - hex формат, на который мы проверяем название цвета на сайте.
+            data = webcolors.hex_to_name(data)
+        except ValueError:
+            # Иначе возвращаем ошибку
+            raise serializers.ValidationError('Для этого цвета нет имени')
+        # Возвращаем данные в новом формате
+        return data
+
+
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор модели тег."""
+
+    color = Hex2NameColor()
 
     class Meta:
         model = Tag
@@ -147,14 +175,15 @@ class RecipesSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author',
                   'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name',
-                  'text', 'cooking_time'
-                  # 'image'
+                  'text', 'cooking_time',
+                  'image'
                   )
 
     def get_is_favorited(self, obj):
@@ -204,14 +233,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True
     )
 
-    # image = Base64ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'ingredients',
             'tags',
-            # 'image',
+            'image',
             'name',
             'text',
             'cooking_time'
@@ -220,6 +249,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Создание рецепта.
+        Делаем, чтобы сделать связь m2m.
         """
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')  # Уберите 'tags' из validated_data
@@ -238,6 +268,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """
         Изменение рецепта.
         Доступно только автору.
+        Делаем, чтобы сделать связь m2m.
         """
 
         RecipeTag.objects.filter(recipe=instance).delete()
@@ -276,14 +307,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 class ShowFavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения избранного."""
 
-    # image = Base64ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'id',
             'name',
-            # 'image',
+            'image',
             'cooking_time'
         )
 
@@ -304,14 +335,14 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class ShowShoppingCartSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения Списка покупок."""
 
-    # image = Base64ImageField()
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'id',
             'name',
-            # 'image'
+            'image',
             'cooking_time'
         )
 

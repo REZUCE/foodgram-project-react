@@ -23,8 +23,10 @@ User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
-    pagination_class = CustomPagination
-    permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    print('password')
+    serializer_class = User
+    # pagination_class = CustomPagination
+    # permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     @action(
         methods=("get",),

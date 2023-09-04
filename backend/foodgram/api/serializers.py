@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from django.contrib.auth import get_user_model
-from drf_extra_fields.fields import Base64ImageField
+# from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from users.models import CustomUser, Subscription
 from recipes.models import Tag, Recipe, RecipeIngredient, Ingredient, RecipeTag, Favorite, ShoppingCart
@@ -12,16 +12,32 @@ User = get_user_model()
 
 class CustomUserSerializer(UserSerializer):
     """Сериализатор создания пользователя."""
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
         fields = (
-            'email',
             'id',
+            'email',
             'username',
             'first_name',
             'last_name',
+            'is_subscribed'
         )
+
+    def get_is_subscribed(self, obj):
+        """
+        Дополнительное поле - проверка подписки, которое
+        никак не взаимодействует с базой данных.
+        """
+
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        # obj - это сериализуемый пользователь
+        return Subscription.objects.filter(
+            user=request.user, author=obj
+        ).exists()
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -31,25 +47,11 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         model = CustomUser
         fields = (
             'email',
-            'id',
             'username',
             'first_name',
             'last_name',
-            'is_subscribed'
+            'password'
         )
-
-    def get_is_subscribed(self, obj):
-        """
-        Дополнительное поле, которое
-        никак не взаимодействует с базой данных.
-        """
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        # obj - это сериализуемый пользователь
-        return Subscription.objects.filter(
-            user=request.user, author=obj
-        ).exists()
 
 
 class ShowSubscriptionSerializer(serializers.ModelSerializer):
@@ -202,14 +204,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(), many=True
     )
 
-    image = Base64ImageField()
+    # image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'ingredients',
             'tags',
-            'image',
+            # 'image',
             'name',
             'text',
             'cooking_time'
@@ -274,14 +276,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 class ShowFavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения избранного."""
 
-    image = Base64ImageField()
+    # image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'id',
             'name',
-            'image',
+            # 'image',
             'cooking_time'
         )
 
@@ -302,14 +304,14 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class ShowShoppingCartSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения Списка покупок."""
 
-    image = Base64ImageField()
+    # image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = (
             'id',
             'name',
-            'image'
+            # 'image'
             'cooking_time'
         )
 

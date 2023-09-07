@@ -1,7 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import TagViewSet, RecipeViewSet, CustomUserViewSet, IngredientViewSet, APIFavorite, APISubscription, \
-    APIShoppingCart
+from .views import (
+    TagViewSet, RecipeViewSet,
+    CustomUserViewSet, IngredientViewSet,
+    APIFavorite, APISubscription,
+    APIShoppingCart, download_shopping
+)
 
 app_name = 'api'
 
@@ -18,6 +22,11 @@ urlpatterns = [
         'recipes/<int:id>/shopping_cart/',
         APIShoppingCart.as_view(),
         name='shopping_cart'
+    ),
+    path(
+        'recipes/download_shopping_cart/',
+        download_shopping,
+        name='download_shopping'
     ),
     path(
         'recipes/<int:id>/favorite/',

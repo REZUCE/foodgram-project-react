@@ -10,9 +10,12 @@ class RecipeFilter(filters.FilterSet):
     )
     author = filters.CharFilter()
     tags = filters.ModelMultipleChoiceFilter(
+        # Обращаемся к связанному полю.
         field_name='tags__slug',
         queryset=Tag.objects.all(),
+        # Устанавливаем метку "Теги" для фильтра.
         label='Tags',
+
         to_field_name='slug'
     )
 
@@ -21,8 +24,9 @@ class RecipeFilter(filters.FilterSet):
         fields = ('is_favorited', 'is_in_shopping_cart', 'author')
 
     def get_is_favorited(self, queryset, name, value):
-        """Фильтрация всех полей модели(queryset)."""
-        if value:
+        """Фильтрация queryset по полю is_favorited."""
+
+        if value and self.request.user.is_authenticated:
             # Обращение к таблице Favorite через related_name.
             # В избранном только те рецепты, которые есть в избранном
             # у пользователя отправившего запрос.
@@ -30,6 +34,10 @@ class RecipeFilter(filters.FilterSet):
         return queryset
 
     def get_is_in_shopping_cart(self, queryset, name, value):
-        if value:
+        """Фильтрация queryset по полю is_in_shopping_cart."""
+
+        if value and self.request.user.is_authenticated:
             return queryset.filter(shopping_cart__user=self.request.user)
         return queryset
+
+

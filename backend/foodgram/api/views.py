@@ -1,7 +1,11 @@
+import weasyprint
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from djoser.views import UserViewSet
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import (
@@ -9,13 +13,13 @@ from rest_framework.permissions import (
     AllowAny
 )
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django.conf import settings
 from rest_framework.filters import SearchFilter
 
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from django.contrib.auth import get_user_model
 from users.models import Subscription
-from recipes.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
+from recipes.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart, RecipeIngredient
 from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
@@ -206,3 +210,20 @@ class APIShoppingCart(APIView):
             ).delete()
             return Response(status=HTTP_204_NO_CONTENT)
         return Response(status=HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def download_shopping(request):
+    ingredients = RecipeIngredient.objects.filter(
+        recipe__shopping_cart__user=request.user
+    ).values('ingredient__name', 'ingredient__measurement_unit', ).annotate(
+        amount=Sum('amount')
+    )
+    # Передаем значение в pdf.
+    html = render_to_string('ingredients_buy.html',
+                            {'ingredients': ingredients})
+    # Указываем тип содержимого.
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename=wish_list.pdf'
+    weasyprint.HTML(string=html).write_pdf(response)
+    return response

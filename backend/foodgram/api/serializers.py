@@ -221,7 +221,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'amount')
+        fields = ('id', 'amount', 'measurement_unit')
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -251,6 +251,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         Создание рецепта.
         Делаем, чтобы сделать связь m2m.
         """
+
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')  # Уберите 'tags' из validated_data
         recipe = Recipe.objects.create(**validated_data)

@@ -35,6 +35,9 @@ class Ingredient(models.Model):
         return f"{self.name} - вес в  {self.measurement_unit}"
 
 
+
+
+
 class Tag(models.Model):
     """Модель тегов."""
 

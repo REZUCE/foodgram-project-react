@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Список</title>
+
+</head>
+<body>
+<div class="card-header">
+    Список
+</div>
+<div class="card" style="width: 18rem;">
+    <ul class="list-group list-group-flush">
+        {% for ingredient in ingredients %}
+
+        <li class="list-group-item">
+            Название: {{ingredient.ingredient__name}} : {{ingredient.amount}} {{ingredient.ingredient__measurement_unit}}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+</body>
+</html>

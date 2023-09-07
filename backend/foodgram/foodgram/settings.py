@@ -38,6 +38,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'foodgram.urls'
+# В более новых версия django можно прописать иначе. Но как лучше сам не знаю.
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 TEMPLATES = [
     {

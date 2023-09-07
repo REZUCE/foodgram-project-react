@@ -35,7 +35,11 @@ class Ingredient(models.Model):
         return f"{self.name} - вес в  {self.measurement_unit}"
 
 
+class IngredientImport(models.Model):
+    """Модель для сохранения истории импортов."""
 
+    csv_file = models.FileField(upload_to='uploads/')
+    date_added = models.DateTimeField(auto_now_add=True)
 
 
 class Tag(models.Model):

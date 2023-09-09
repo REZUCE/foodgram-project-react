@@ -1,5 +1,14 @@
-from django.contrib import admin
+import csv
 
+from django.contrib import admin
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import path
+from django.urls import reverse
+from users.admin import UsernameFilterCustomUser
+
+from .forms import IngredientImportForm
 from .models import (
     Tag, Recipe, Ingredient,
     RecipeIngredient, RecipeTag,
@@ -9,15 +18,6 @@ from .models import (
 admin.site.register(Tag)
 admin.site.register(Favorite)
 admin.site.register(ShoppingCart)
-
-# обслуживание импорта
-import csv
-from .forms import IngredientImportForm
-from django.urls import path
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.urls import reverse
-from django.contrib import messages
 
 
 class RecipeIngredientInline(admin.TabularInline):
@@ -37,18 +37,20 @@ class RecipeTagInline(admin.TabularInline):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     inlines = (RecipeIngredientInline, RecipeTagInline,)
+    list_filter = ('tags', 'name', 'author',)
 
 
 # Отображает панель для модели BookImport.
 @admin.register(IngredientImport)
 class BookImportAdmin(admin.ModelAdmin):
-    list_display = ('csv_file', 'date_added')
+    list_display = ('csv_file', 'date_added',)
 
 
 # Отображает панель для модели Book и метод для импорта.
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit',)
+    list_filter = ('name',)
 
     # Даем django(urlpatterns) знать
     # о существовании страницы с формой
@@ -73,9 +75,14 @@ class IngredientAdmin(admin.ModelAdmin):
                     if next(rows) != ['name', 'measurement_unit']:
                         # Обновляем страницу пользователя
                         # с информацией о какой-то ошибке.
-                        messages.warning(request, 'Неверные заголовки у файла')
-                        # Перенаправление на тот url, с которого отправили запрос.
-                        return HttpResponseRedirect(request.path_info)
+                        messages.warning(
+                            request, 'Неверные заголовки у файла'
+                        )
+                        # Перенаправление на тот url, с которого
+                        # отправили запрос.
+                        return HttpResponseRedirect(
+                            request.path_info
+                        )
                     for row in rows:
                         # Добавляем данные в базу.
                         Ingredient.objects.update_or_create(

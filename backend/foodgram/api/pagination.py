@@ -8,4 +8,3 @@ class CustomPagination(PageNumberPagination):
     page_size = 6
     # Используем 'page' для указания номера страницы
     page_query_param = 'page'
-

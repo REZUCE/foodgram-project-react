@@ -1,37 +1,42 @@
 import weasyprint
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
 from rest_framework.decorators import action, api_view
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import (
     IsAuthenticated,
     AllowAny
 )
-from django_filters.rest_framework import DjangoFilterBackend
-from django.conf import settings
-from rest_framework.filters import SearchFilter
-
+from rest_framework.response import Response
+from rest_framework.status import (HTTP_201_CREATED,
+                                   HTTP_400_BAD_REQUEST,
+                                   HTTP_204_NO_CONTENT)
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from django.contrib.auth import get_user_model
+
+from recipes.models import (Tag, Recipe, Ingredient,
+                            Favorite, ShoppingCart,
+                            RecipeIngredient)
 from users.models import Subscription
-from recipes.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart, RecipeIngredient
 from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
-from .serializers import TagSerializer, RecipesSerializer, RecipeCreateSerializer, \
-    IngredientSerializer, FavoriteSerializer, ShowSubscriptionSerializer, SubscriptionSerializer, ShoppingCartSerializer
+from .serializers import (TagSerializer, RecipesSerializer,
+                          RecipeCreateSerializer, IngredientSerializer,
+                          FavoriteSerializer, ShowSubscriptionSerializer,
+                          SubscriptionSerializer, ShoppingCartSerializer,
+                          CustomUserSerializer)
 
 User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
-    print('password')
-    serializer_class = User
+    serializer_class = CustomUserSerializer
     pagination_class = CustomPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
@@ -40,18 +45,16 @@ class CustomUserViewSet(UserViewSet):
         detail=False,
         permission_classes=(IsAuthenticated,),
         pagination_class=CustomPagination
-
     )
     def subscriptions(self, request):
         """
         Получить пользователей на которых подписан текущий пользователь.
         """
-
         subscription = User.objects.filter(author__user=request.user)
-        # Подписки запихнули в пагинацию
+        # Подписки запихнули в пагинацию.
         page = self.paginate_queryset(subscription)
         # Передаем request - это объект запроса, который содержит
-        # информацию о текущем запросе, включая параметры пагинации,
+        # информацию о текущем запросе, включая параметры пагинации.
         serializer = ShowSubscriptionSerializer(
             page,
             many=True,
@@ -84,6 +87,7 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
+    # Какие запросы идут к бд именно в этом ViewSet.
     # def dispatch(self, request, *args, **kwargs):
     #     res = super().dispatch(request, *args, **kwargs)
     #     from django.db import connection
@@ -107,11 +111,13 @@ class RecipeViewSet(ModelViewSet):
         Под каждый тип запросов свой serializer.
         """
 
-        if self.action in ('create', 'update'):
-            return RecipeCreateSerializer
-        return RecipesSerializer
+        if self.request.method == 'GET':
+            return RecipesSerializer
+        return RecipeCreateSerializer
 
     def perform_create(self, serializer):
+        # До создания в serializer полю author
+        # присваиваем user.
         serializer.save(author=self.request.user)
 
 
@@ -224,6 +230,6 @@ def download_shopping(request):
                             {'ingredients': ingredients})
     # Указываем тип содержимого.
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'filename=wish_list.pdf'
+    response['Content-Disposition'] = 'filename=wish_list.pdf'
     weasyprint.HTML(string=html).write_pdf(response)
     return response

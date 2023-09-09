@@ -1,9 +1,17 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
+
+from django.utils.translation import gettext_lazy as _
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv()
+# Там где ищем .env.
+env_path = os.path.join(BASE_DIR, '.env')
+load_dotenv(dotenv_path=env_path)
+
+# Что лучше использовать getenv или environ?
 SECRET_KEY = os.getenv('SECRET_KEY', 'my-default-secret-key')
 
 # DEBUG = True
@@ -31,6 +39,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # Для работы translate в админке.
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -95,6 +105,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LANGUAGES = [
+    ('en', _('English')),
+    ('fr', _('French')),
+    ('es', _('Spanish')),
+    ('ru', _('Russia'))
+    # Другие языки
+]
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -140,9 +158,10 @@ DJOSER = {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
         'user_list': ['rest_framework.permissions.AllowAny']
     },
+    # Чтобы текущий пользователь мог видеть данные всех.
     'HIDE_USERS': False,
 }
-
+# Для проверки какие запросы идут к бд.
 # LOGGING = {
 #     "version": 1,
 #     "disable_existing_loggers": False,

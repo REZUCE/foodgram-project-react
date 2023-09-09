@@ -1,12 +1,13 @@
-from rest_framework import serializers
-from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer, UserCreateSerializer
-from django.contrib.auth import get_user_model
-from drf_extra_fields.fields import Base64ImageField
-from django.contrib.auth import get_user_model
-from users.models import CustomUser, Subscription
-from recipes.models import Tag, Recipe, RecipeIngredient, Ingredient, RecipeTag, Favorite, ShoppingCart
 import webcolors
+from django.contrib.auth import get_user_model
+from djoser.serializers import UserSerializer, UserCreateSerializer
+from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
+from recipes.models import (Tag, Recipe, RecipeIngredient,
+                            Ingredient, RecipeTag, Favorite,
+                            ShoppingCart)
+from users.models import Subscription
 
 User = get_user_model()
 
@@ -16,7 +17,7 @@ class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = (
             'id',
             'email',
@@ -45,7 +46,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     """Сериализатор модели пользователя."""
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = (
             'email',
             'username',
@@ -71,24 +72,29 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'is_subscribed',
-            'recipes',  # рецепты должны относится к опредленному пользователю
+            # Рецепты должны относится к определенному пользователю.
+            'recipes',
             'recipes_count'
         )
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        # Если пользователь анонимный, то вернуть False
+        # Если пользователь анонимный, то вернуть False.
         if request is None or request.user.is_anonymous:
             return False
         return Subscription.objects.filter(
-            user=request.user, author=obj).exists()
+            user=request.user, author=obj
+        ).exists()
 
     def get_recipes(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
         recipes = Recipe.objects.filter(author=obj)
-        return ShowFavoriteSerializer(recipes, many=True, context={'request': request}).data
+        return ShowFavoriteSerializer(
+            recipes, many=True,
+            context={'request': request}
+        ).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
@@ -114,16 +120,18 @@ class Hex2NameColor(serializers.Field):
     В режиме чтения вернёт название цвета из БД.
     """
 
-    # При чтении данных ничего не меняем - просто возвращаем как есть
+    # При чтении данных ничего не меняем - просто возвращаем как есть.
     def to_representation(self, value):
         return value
 
-    # При записи код цвета конвертируется в его название
+    # При записи код цвета конвертируется в его название.
     def to_internal_value(self, data):
         # Доверяй, но проверяй
         try:
-            # Если имя цвета существует, то конвертируем код в название.
-            # data - hex формат, на который мы проверяем название цвета на сайте.
+            # Если имя цвета существует,
+            # то конвертируем код в название.
+            # data - hex формат, на который мы
+            # проверяем название цвета на сайте.
             data = webcolors.hex_to_name(data)
         except ValueError:
             # Иначе возвращаем ошибку

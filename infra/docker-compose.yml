@@ -7,7 +7,7 @@ volumes:
 services:
   db:
     image: postgres:13.10
-    env_file: .env
+    env_file: ../.env
     volumes:
       - pg_data_production:/var/lib/postgresql/data
     restart: always
@@ -15,7 +15,7 @@ services:
     build:
       context: ../backend/foodgram
       dockerfile: Dockerfile
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - db
     volumes:

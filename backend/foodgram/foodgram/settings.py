@@ -8,8 +8,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv()
 # Там где ищем .env.
-env_path = os.path.join(BASE_DIR, '.env')
-load_dotenv(dotenv_path=env_path)
 
 # Что лучше использовать getenv или environ?
 SECRET_KEY = os.getenv('SECRET_KEY', 'my-default-secret-key')

@@ -1,13 +1,9 @@
-FROM python:3.7-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-
-RUN apt-get -y install python3-pip
+COPY . .
 
 RUN pip install -r requirements.txt --no-cache-dir
 
-COPY . .
-
-CMD ["gunicorn", "foodgram.wsgi:application", "--bind", "0:7000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:7000", "foodgram.wsgi"]

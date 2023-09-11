@@ -1,4 +1,4 @@
 # Домен: https://foodgramlisicyn.ddns.net/
 # Админка: 
-Пароль: admin@admin.ru
-Логин: a
+Пароль: a
+Логин: admin@admin.ru

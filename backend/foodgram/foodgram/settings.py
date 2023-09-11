@@ -16,7 +16,6 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'my-default-secret-key')
 DEBUG = False
 # Чтобы бэк принимал запросы из nginx добавили host.docker.internal
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

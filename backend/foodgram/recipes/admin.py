@@ -6,7 +6,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path
 from django.urls import reverse
-from users.admin import UsernameFilterCustomUser
 
 from .forms import IngredientImportForm
 from .models import (

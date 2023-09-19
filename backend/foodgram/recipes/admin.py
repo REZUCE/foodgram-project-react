@@ -23,6 +23,7 @@ class RecipeIngredientInline(admin.TabularInline):
     """Позволяет редактировать связанные объекты."""
 
     model = RecipeIngredient
+    min_num = 1
     extra = 1
 
 
@@ -30,13 +31,25 @@ class RecipeTagInline(admin.TabularInline):
     """Позволяет редактировать связанные объекты."""
 
     model = RecipeTag
+    min_num = 1
     extra = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'author', 'count_favorites',)
     inlines = (RecipeIngredientInline, RecipeTagInline,)
-    list_filter = ('tags', 'name', 'author',)
+    list_filter = ('tags',)
+    search_fields = (
+        "name",
+        "author__username",
+        "tags__name",
+    )
+
+    def count_favorites(self, obj):
+        return obj.favorites.count()
+
+    count_favorites.short_description = "В избранном"
 
 
 # Отображает панель для модели BookImport.
@@ -49,7 +62,7 @@ class BookImportAdmin(admin.ModelAdmin):
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit',)
-    list_filter = ('name',)
+    search_fields = ('name',)
 
     # Даем django(urlpatterns) знать
     # о существовании страницы с формой

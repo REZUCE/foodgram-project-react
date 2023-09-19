@@ -1,5 +1,5 @@
 from re import match
-
+from core.parametrs import Parameters
 from django.core.exceptions import ValidationError
 
 

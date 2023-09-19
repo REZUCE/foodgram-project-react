@@ -2,42 +2,43 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.parametrs import Parameters
 from .validators import validate_username
 
 
 class CustomUser(AbstractUser):
     """Кастомная модель пользователя."""
 
+    # Замена логина.
+    USERNAME_FIELD = 'email'
+    # Что будет запрашиваться при createsuperuser
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
-        max_length=254,
+        max_length=Parameters.MAX_LEN_EMAIL.value,
         unique=True,
     )
 
     username = models.CharField(
         verbose_name='Уникальный юзернейм',
-        max_length=150,
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_USERS.value,
         unique=True,
         validators=[validate_username]
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=150
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_USERS.value
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=150
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_USERS.value
     )
 
     password = models.CharField(
         verbose_name='Пароль',
-        max_length=150
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_USERS.value
     )
-
-    # Замена логина.
-    USERNAME_FIELD = 'email'
-    # Что будет запрашиваться при createsuperuser
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -54,7 +55,7 @@ class Subscription(models.Model):
     user = models.ForeignKey(
         to=CustomUser,
         verbose_name='Подписчик',
-        related_name='followers',
+        related_name='subscription',
         on_delete=models.CASCADE
     )
     author = models.ForeignKey(

@@ -1,13 +1,12 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import UniqueConstraint
 
+from core.parametrs import Parameters
+from users.models import CustomUser
 from .validators import (
     validate_slug,
     validate_cooking_time,
     validate_recipe_ingredient)
-
-User = get_user_model()
 
 
 class Ingredient(models.Model):
@@ -15,11 +14,11 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=200
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
     )
     measurement_unit = models.CharField(
         verbose_name='Единицы измерение',
-        max_length=200
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
     )
 
     class Meta:
@@ -48,11 +47,11 @@ class Tag(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=200,
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value,
     )
     color = models.CharField(
         verbose_name='Цвет в HEX',
-        max_length=7
+        max_length=Parameters.MAX_LEN_COLOR.value
     )
     slug = models.SlugField(
         verbose_name='Уникальный слаг',
@@ -77,7 +76,8 @@ class Recipe(models.Model):
         through='RecipeTag',
     )
     author = models.ForeignKey(
-        to=User,
+        to=CustomUser,
+        related_name='user_recipes',
         verbose_name='Пользователь (В рецепте - автор рецепта)',
         on_delete=models.CASCADE
     )
@@ -95,7 +95,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=200
+        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
     )
     text = models.TextField(
         verbose_name='Описание'
@@ -104,12 +104,16 @@ class Recipe(models.Model):
         verbose_name='Время приготовления (в минутах)',
         validators=[validate_cooking_time]
     )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата публикации.',
+        auto_now_add=True
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         # В порядке убывания
-        ordering = ['-id']
+        ordering = ('pub_date',)
 
     def __str__(self) -> str:
         return f"{self.name}"
@@ -182,7 +186,7 @@ class ShoppingCart(models.Model):
     """Модель корзины."""
 
     user = models.ForeignKey(
-        to=User,
+        to=CustomUser,
         verbose_name='Пользователь',
         related_name='shopping_cart',
         on_delete=models.CASCADE,
@@ -213,7 +217,7 @@ class Favorite(models.Model):
     """Модель избранного."""
 
     user = models.ForeignKey(
-        to=User,
+        to=CustomUser,
         verbose_name='Пользователь',
         related_name='favorites',
         on_delete=models.CASCADE,

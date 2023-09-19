@@ -1,5 +1,4 @@
 import weasyprint
-from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -22,6 +21,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from recipes.models import (Tag, Recipe, Ingredient,
                             Favorite, ShoppingCart,
                             RecipeIngredient)
+from users.models import CustomUser
 from users.models import Subscription
 from .filters import RecipeFilter
 from .pagination import CustomPagination
@@ -31,8 +31,6 @@ from .serializers import (TagSerializer, RecipesSerializer,
                           FavoriteSerializer, ShowSubscriptionSerializer,
                           SubscriptionSerializer, ShoppingCartSerializer,
                           CustomUserSerializer)
-
-User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
@@ -50,7 +48,14 @@ class CustomUserViewSet(UserViewSet):
         """
         Получить пользователей на которых подписан текущий пользователь.
         """
-        subscription = User.objects.filter(author__user=request.user)
+        subscription = CustomUser.objects.filter(author__user=request.user)
+        # subscription = CustomUser.objects.annotate(
+        #     is_subscribed=Case(
+        #         When(author__user=request.user, then=Value(True)),
+        #         default=Value(False),
+        #         output_field=BooleanField()
+        #     )
+        # )
         # Подписки запихнули в пагинацию.
         page = self.paginate_queryset(subscription)
         # Передаем request - это объект запроса, который содержит
@@ -62,6 +67,14 @@ class CustomUserViewSet(UserViewSet):
         )
 
         return self.get_paginated_response(serializer.data)
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     res = super().dispatch(request, *args, **kwargs)
+    #     from django.db import connection
+    #     print(len(connection.queries))
+    #     for q in connection.queries:
+    #         print('>>>>', q['sql'])
+    #     return res
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -135,7 +148,7 @@ class APIFavorite(APIView):
             serializer = FavoriteSerializer(
                 data=data, context={'request': request}
             )
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
                     serializer.data, status=HTTP_201_CREATED)
@@ -168,14 +181,14 @@ class APISubscription(APIView):
             data=data,
             context={'request': request}
         )
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(
                 serializer.data, status=HTTP_201_CREATED)
         return Response(status=HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
-        author = get_object_or_404(User, id=id)
+        author = get_object_or_404(CustomUser, id=id)
         if Subscription.objects.filter(
                 user=request.user,
                 author=author).exists():
@@ -200,7 +213,7 @@ class APIShoppingCart(APIView):
             serializer = ShoppingCartSerializer(
                 data=data, context={'request': request}
             )
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
                     serializer.data, status=HTTP_201_CREATED)

@@ -1,23 +1,23 @@
 import webcolors
-from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Tag, Recipe, RecipeIngredient,
                             Ingredient, RecipeTag, Favorite,
                             ShoppingCart)
+from users.models import CustomUser
 from users.models import Subscription
-
-User = get_user_model()
 
 
 class CustomUserSerializer(UserSerializer):
     """Сериализатор создания пользователя."""
+
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = (
             'id',
             'email',
@@ -34,19 +34,19 @@ class CustomUserSerializer(UserSerializer):
         """
 
         request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        # obj - это сериализуемый пользователь
-        return Subscription.objects.filter(
-            user=request.user, author=obj
-        ).exists()
+
+        # Обращаемся через related_name и получаем подписку на пользователя.
+        return (
+                request.user.is_authenticated
+                and request.user.subscription.exists()
+        )
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
     """Сериализатор модели пользователя."""
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = (
             'email',
             'username',
@@ -59,12 +59,17 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 class ShowSubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения подписок на пользователя."""
 
+    # is_subscribed = serializers.BooleanField(read_only=True)
+    # Я НЕ ПОНИМАЮ, КАК УЛУЧШИТЬ ЗАПРОСЫ К БД,
+    # ПОЖАЛУЙСТА ДАЙТЕ МАТЕРИАЛ, КОТОРЫЙ НАУЧИТ PLZZZZ HELP
+    # Я ВАМ ДАЖЕ В ЛС ПИСАЛ В ПАЧКЕ
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    # Подсчитать количество рецептов из связанной модели с CustomUser.
+    recipes_count = serializers.ReadOnlyField(source='user_recipes.count')
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = (
             'email',
             'id',
@@ -77,14 +82,18 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
             'recipes_count'
         )
 
+    # def get_is_subscribed(self, obj):
+    #     request = self.context.get('request')
+    #     return (
+    #             request.user.is_authenticated
+    #             and request.user.subscription.exists()
+    #     )
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        # Если пользователь анонимный, то вернуть False.
-        if request is None or request.user.is_anonymous:
-            return False
-        return Subscription.objects.filter(
-            user=request.user, author=obj
-        ).exists()
+        return (
+                request.user.is_authenticated
+                and request.user.subscription.exists()
+        )
 
     def get_recipes(self, obj):
         request = self.context.get('request')
@@ -96,9 +105,6 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
             context={'request': request}
         ).data
 
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj).count()
-
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериазитор создания подписки."""
@@ -108,9 +114,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ('user', 'author')
 
     def to_representation(self, instance):
-        return ShowSubscriptionSerializer(instance.author, context={
-            'request': self.context.get('request')
-        }).data
+        return ShowSubscriptionSerializer(
+            instance.author, context=self.context
+        ).data
+
+    def validate(self, data):
+        if data['user'] == data['author']:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя!')
+        return data
 
 
 class Hex2NameColor(serializers.Field):
@@ -124,8 +136,7 @@ class Hex2NameColor(serializers.Field):
     def to_representation(self, value):
         return value
 
-    # При записи код цвета конвертируется в его название.
-    def to_internal_value(self, data):
+    def validate_hex(self, data):
         # Доверяй, но проверяй
         try:
             # Если имя цвета существует,
@@ -138,6 +149,10 @@ class Hex2NameColor(serializers.Field):
             raise serializers.ValidationError('Для этого цвета нет имени')
         # Возвращаем данные в новом формате
         return data
+
+    # При записи код цвета конвертируется в его название.
+    def to_internal_value(self, data):
+        self.validate_hex(data)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -200,12 +215,11 @@ class RecipesSerializer(serializers.ModelSerializer):
         никак не взаимодействует с базой данных.
         """
         request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        # obj - это сериализуемый пользователь
-        return Favorite.objects.filter(
-            user=request.user, recipe=obj
-        ).exists()
+
+        return (
+                request.user.is_authenticated
+                and request.user.favorites.exists()
+        )
 
     def get_is_in_shopping_cart(self, obj):
         """
@@ -213,12 +227,10 @@ class RecipesSerializer(serializers.ModelSerializer):
         никак не взаимодействует с базой данных.
         """
         request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        # obj - это сериализуемый пользователь
-        return ShoppingCart.objects.filter(
-            user=request.user, recipe=obj
-        ).exists()
+        return (
+                request.user.is_authenticated
+                and request.user.shopping_cart.exists()
+        )
 
 
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
@@ -233,6 +245,13 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'amount', 'measurement_unit')
+
+    validators = [
+        UniqueTogetherValidator(
+            queryset=Ingredient.objects.all(),
+            fields=('name', 'measurement_unit')
+        )
+    ]
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -256,6 +275,41 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
+
+    def validate(self, data):
+        tags = data['tags']
+        ingredients = data['ingredients']
+
+        list_tags = []
+        list_ingredients = []
+        if not tags:
+            raise serializers.ValidationError(
+                'Хотя бы один тег должен быть.'
+            )
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Хотя бы один ингредиент должен быть.'
+            )
+        for ingredient in list_ingredients:
+            if ingredient['id'] in list_ingredients:
+                raise serializers.ValidationError(
+                    'Ингредиент должен быть уникальным.'
+                )
+            list_ingredients.append(ingredient['id'])
+
+        for tag in list_tags:
+            if tag['id'] in list_tags:
+                raise serializers.ValidationError(
+                    'Тег должен быть уникальным.'
+                )
+            list_ingredients.append(tag['id'])
+
+    def validate_cooking_time(self, value):
+        if not 120 >= value >= 1:
+            raise serializers.ValidationError(
+                'Время приготовления должно быть положительным числом '
+                'и меньше 2 часов (120 минут).'
+            )
 
     def create(self, validated_data):
         """

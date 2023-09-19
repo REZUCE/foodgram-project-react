@@ -8,7 +8,6 @@ class RecipeFilter(filters.FilterSet):
     is_in_shopping_cart = filters.BooleanFilter(
         method='get_is_in_shopping_cart'
     )
-    author = filters.CharFilter()
     tags = filters.ModelMultipleChoiceFilter(
         # Обращаемся к связанному полю.
         field_name='tags__slug',
@@ -26,7 +25,7 @@ class RecipeFilter(filters.FilterSet):
     def get_is_favorited(self, queryset, name, value):
         """Фильтрация queryset по полю is_favorited."""
 
-        if value and self.request.user.is_authenticated:
+        if value:
             # Обращение к таблице Favorite через related_name.
             # В избранном только те рецепты, которые есть в избранном
             # у пользователя отправившего запрос.
@@ -36,6 +35,6 @@ class RecipeFilter(filters.FilterSet):
     def get_is_in_shopping_cart(self, queryset, name, value):
         """Фильтрация queryset по полю is_in_shopping_cart."""
 
-        if value and self.request.user.is_authenticated:
+        if value:
             return queryset.filter(shopping_cart__user=self.request.user)
         return queryset

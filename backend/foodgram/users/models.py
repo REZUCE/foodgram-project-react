@@ -37,7 +37,7 @@ class CustomUser(AbstractUser):
 
     password = models.CharField(
         verbose_name='Пароль',
-        max_length=Parameters.MAX_LEN_CHAR_FIELD_USERS.value
+        max_length=128
     )
 
     class Meta:

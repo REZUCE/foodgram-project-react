@@ -6,6 +6,7 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls', namespace='api')),
+    # path("__debug__/", include("debug_toolbar.urls"))
 ]
 
 # Чтобы Django локально работало с media files
@@ -13,4 +14,3 @@ if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
     )
-    urlpatterns += path("__debug__/", include("debug_toolbar.urls"))

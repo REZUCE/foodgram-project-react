@@ -37,8 +37,8 @@ class CustomUserSerializer(UserSerializer):
 
         # Обращаемся через related_name и получаем подписку на пользователя.
         return (
-                request.user.is_authenticated
-                and request.user.subscription.exists()
+            request.user.is_authenticated
+            and request.user.subscription.exists()
         )
 
 
@@ -91,8 +91,8 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return (
-                request.user.is_authenticated
-                and request.user.subscription.exists()
+            request.user.is_authenticated
+            and request.user.subscription.exists()
         )
 
     def get_recipes(self, obj):
@@ -217,8 +217,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.favorites.exists()
+            request.user.is_authenticated
+            and request.user.favorites.exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -228,8 +228,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         """
         request = self.context.get('request')
         return (
-                request.user.is_authenticated
-                and request.user.shopping_cart.exists()
+            request.user.is_authenticated
+            and request.user.shopping_cart.exists()
         )
 
 

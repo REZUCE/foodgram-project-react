@@ -111,7 +111,7 @@ class RecipeViewSet(ModelViewSet):
         methods=['get', 'post'],
         permission_classes=(IsAuthenticated,)
     )
-    def fevorite(self, request, pk):
+    def favorite(self, request, pk):
         if request.method == 'POST':
             if not Favorite.objects.filter(
                     user=request.user, recipe__id=id).exists():

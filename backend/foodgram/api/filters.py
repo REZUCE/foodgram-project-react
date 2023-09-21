@@ -9,10 +9,8 @@ class RecipeFilter(filters.FilterSet):
         method='get_is_in_shopping_cart'
     )
     tags = filters.ModelMultipleChoiceFilter(
-        # Обращаемся к связанному полю.
         field_name='tags__slug',
         queryset=Tag.objects.all(),
-        # Устанавливаем метку "Теги" для фильтра.
         label='Tags',
 
         to_field_name='slug'
@@ -26,9 +24,6 @@ class RecipeFilter(filters.FilterSet):
         """Фильтрация queryset по полю is_favorited."""
 
         if value:
-            # Обращение к таблице Favorite через related_name.
-            # В избранном только те рецепты, которые есть в избранном
-            # у пользователя отправившего запрос.
             return queryset.filter(favorites__user=self.request.user)
         return queryset
 

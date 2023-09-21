@@ -49,17 +49,7 @@ class CustomUserViewSet(UserViewSet):
         Получить пользователей на которых подписан текущий пользователь.
         """
         subscription = CustomUser.objects.filter(author__user=request.user)
-        # subscription = CustomUser.objects.annotate(
-        #     is_subscribed=Case(
-        #         When(author__user=request.user, then=Value(True)),
-        #         default=Value(False),
-        #         output_field=BooleanField()
-        #     )
-        # )
-        # Подписки запихнули в пагинацию.
         page = self.paginate_queryset(subscription)
-        # Передаем request - это объект запроса, который содержит
-        # информацию о текущем запросе, включая параметры пагинации.
         serializer = ShowSubscriptionSerializer(
             page,
             many=True,
@@ -67,14 +57,6 @@ class CustomUserViewSet(UserViewSet):
         )
 
         return self.get_paginated_response(serializer.data)
-
-    # def dispatch(self, request, *args, **kwargs):
-    #     res = super().dispatch(request, *args, **kwargs)
-    #     from django.db import connection
-    #     print(len(connection.queries))
-    #     for q in connection.queries:
-    #         print('>>>>', q['sql'])
-    #     return res
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -100,15 +82,6 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
-    # Какие запросы идут к бд именно в этом ViewSet.
-    # def dispatch(self, request, *args, **kwargs):
-    #     res = super().dispatch(request, *args, **kwargs)
-    #     from django.db import connection
-    #     print(len(connection.queries))
-    #     for q in connection.queries:
-    #         print('>>>>', q['sql'])
-    #     return res
-
     def get_queryset(self):
         """
         Для оптимизации запросов к бд.
@@ -132,6 +105,24 @@ class RecipeViewSet(ModelViewSet):
         # До создания в serializer полю author
         # присваиваем user.
         serializer.save(author=self.request.user)
+
+    @action(
+        detail=True,
+        methods=['get', 'post'],
+        permission_classes=(IsAuthenticated,)
+    )
+    def fevorite(self, request, pk):
+        if request.method == 'POST':
+            if not Favorite.objects.filter(
+                    user=request.user, recipe__id=id).exists():
+                serializer = FavoriteSerializer(
+                     context={'request': request}
+                )
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+                    return Response(
+                        serializer.data, status=HTTP_201_CREATED)
+            return Response(status=HTTP_400_BAD_REQUEST)
 
 
 class APIFavorite(APIView):

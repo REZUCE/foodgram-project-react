@@ -10,9 +10,7 @@ from .views import (
 
 app_name = 'api'
 
-# Routers - используются с viewsets
 router = DefaultRouter()
-# Создаем необходимый набор эндпоинтов
 router.register('users', CustomUserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
 router.register('recipes', RecipeViewSet, basename='recipes')

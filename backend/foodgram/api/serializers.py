@@ -35,10 +35,9 @@ class CustomUserSerializer(UserSerializer):
 
         request = self.context.get('request')
 
-        # Обращаемся через related_name и получаем подписку на пользователя.
         return (
-            request.user.is_authenticated
-            and request.user.subscription.exists()
+                request.user.is_authenticated
+                and request.user.subscription.exists()
         )
 
 
@@ -59,13 +58,8 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 class ShowSubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения подписок на пользователя."""
 
-    # is_subscribed = serializers.BooleanField(read_only=True)
-    # Я НЕ ПОНИМАЮ, КАК УЛУЧШИТЬ ЗАПРОСЫ К БД,
-    # ПОЖАЛУЙСТА ДАЙТЕ МАТЕРИАЛ, КОТОРЫЙ НАУЧИТ PLZZZZ HELP
-    # Я ВАМ ДАЖЕ В ЛС ПИСАЛ В ПАЧКЕ
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
-    # Подсчитать количество рецептов из связанной модели с CustomUser.
     recipes_count = serializers.ReadOnlyField(source='user_recipes.count')
 
     class Meta:
@@ -77,22 +71,15 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'is_subscribed',
-            # Рецепты должны относится к определенному пользователю.
             'recipes',
             'recipes_count'
         )
 
-    # def get_is_subscribed(self, obj):
-    #     request = self.context.get('request')
-    #     return (
-    #             request.user.is_authenticated
-    #             and request.user.subscription.exists()
-    #     )
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return (
-            request.user.is_authenticated
-            and request.user.subscription.exists()
+                request.user.is_authenticated
+                and request.user.subscription.exists()
         )
 
     def get_recipes(self, obj):
@@ -132,25 +119,16 @@ class Hex2NameColor(serializers.Field):
     В режиме чтения вернёт название цвета из БД.
     """
 
-    # При чтении данных ничего не меняем - просто возвращаем как есть.
     def to_representation(self, value):
         return value
 
     def validate_hex(self, data):
-        # Доверяй, но проверяй
         try:
-            # Если имя цвета существует,
-            # то конвертируем код в название.
-            # data - hex формат, на который мы
-            # проверяем название цвета на сайте.
             data = webcolors.hex_to_name(data)
         except ValueError:
-            # Иначе возвращаем ошибку
             raise serializers.ValidationError('Для этого цвета нет имени')
-        # Возвращаем данные в новом формате
         return data
 
-    # При записи код цвета конвертируется в его название.
     def to_internal_value(self, data):
         self.validate_hex(data)
 
@@ -191,7 +169,6 @@ class RecipesSerializer(serializers.ModelSerializer):
     """Сериализатор модели рецепт."""
 
     tags = TagSerializer(many=True)
-    # Получай ингредиенты из связанной модели
     ingredients = RecipeIngredientSerializer(
         many=True, source='recipe_ingredients'
     )
@@ -214,11 +191,12 @@ class RecipesSerializer(serializers.ModelSerializer):
         Дополнительное поле, которое
         никак не взаимодействует с базой данных.
         """
+
         request = self.context.get('request')
 
         return (
-            request.user.is_authenticated
-            and request.user.favorites.exists()
+                request.user.is_authenticated
+                and request.user.favorites.exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -226,10 +204,11 @@ class RecipesSerializer(serializers.ModelSerializer):
         Дополнительное поле, которое
         никак не взаимодействует с базой данных.
         """
+
         request = self.context.get('request')
         return (
-            request.user.is_authenticated
-            and request.user.shopping_cart.exists()
+                request.user.is_authenticated
+                and request.user.shopping_cart.exists()
         )
 
 
@@ -276,16 +255,21 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def validate(self, data):
-        tags = data['tags']
-        ingredients = data['ingredients']
-
+    def validate_tags(self, tags):
         list_tags = []
-        list_ingredients = []
         if not tags:
             raise serializers.ValidationError(
                 'Хотя бы один тег должен быть.'
             )
+        for tag in list_tags:
+            if tag['id'] in list_tags:
+                raise serializers.ValidationError(
+                    'Тег должен быть уникальным.'
+                )
+            list_tags.append(tag['id'])
+
+    def validate_ingredients(self, ingredients):
+        list_ingredients = []
         if not ingredients:
             raise serializers.ValidationError(
                 'Хотя бы один ингредиент должен быть.'
@@ -296,13 +280,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     'Ингредиент должен быть уникальным.'
                 )
             list_ingredients.append(ingredient['id'])
-
-        for tag in list_tags:
-            if tag['id'] in list_tags:
-                raise serializers.ValidationError(
-                    'Тег должен быть уникальным.'
-                )
-            list_ingredients.append(tag['id'])
 
     def validate_cooking_time(self, value):
         if not 120 >= value >= 1:
@@ -318,7 +295,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """
 
         ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')  # Уберите 'tags' из validated_data
+        tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         for tag in tags:
             RecipeTag.objects.create(recipe=recipe, tag=tag)
@@ -358,15 +335,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        # instance: Это объект модели, который вы хотите сериализовать.
-        #  Атрибут context у сериализатора содержит контекст,
-        #  в котором происходит сериализация. В вашем коде вы
-        #  извлекаете объект запроса request из контекста, чтобы
-        #  передать его внутрь сериализатора RecipesSerializer.
         context = {"request": self.context.get("request")}
-        # Когда вы хотите получить представление объекта в виде словаря,
-        # который может быть преобразован в JSON или другой формат,
-        # вы используете .data.
         return RecipesSerializer(instance, context=context).data
 
 

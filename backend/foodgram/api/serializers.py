@@ -382,6 +382,21 @@ class ShowShoppingCartSerializer(serializers.ModelSerializer):
         )
 
 
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для отображения списка покупок и избранного."""
+
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
+
+
 class ShoppingCartSerializer(serializers.ModelSerializer):
     """Сериализатор модели Списка покупок."""
 

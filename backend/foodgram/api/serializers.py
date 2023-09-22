@@ -5,8 +5,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Tag, Recipe, RecipeIngredient,
-                            Ingredient, RecipeTag, Favorite,
-                            ShoppingCart)
+                            Ingredient, RecipeTag)
 from users.models import CustomUser
 from users.models import Subscription
 
@@ -87,7 +86,7 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
         if request is None or request.user.is_anonymous:
             return False
         recipes = Recipe.objects.filter(author=obj)
-        return ShowFavoriteSerializer(
+        return ShortRecipeSerializer(
             recipes, many=True,
             context={'request': request}
         ).data
@@ -339,49 +338,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return RecipesSerializer(instance, context=context).data
 
 
-class ShowFavoriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для отображения избранного."""
-
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time'
-        )
-
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    """Сериализатор модели избранного."""
-
-    class Meta:
-        model = Favorite
-        fields = ('recipe', 'user')
-
-    def to_representation(self, instance):
-        return ShowFavoriteSerializer(instance.recipe, context={
-            'request': self.context.get('request')
-        }).data
-
-
-class ShowShoppingCartSerializer(serializers.ModelSerializer):
-    """Сериализатор для отображения Списка покупок."""
-
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time'
-        )
-
-
 class ShortRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения списка покупок и избранного."""
 
@@ -395,16 +351,3 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
             'image',
             'cooking_time'
         )
-
-
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    """Сериализатор модели Списка покупок."""
-
-    class Meta:
-        model = ShoppingCart
-        fields = ('user', 'recipe')
-
-    def to_representation(self, instance):
-        return ShowShoppingCartSerializer(instance.recipe, context={
-            'request': self.context.get('request')
-        }).data

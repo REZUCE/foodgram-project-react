@@ -12,11 +12,11 @@ load_dotenv()
 # Что лучше использовать getenv или environ?
 SECRET_KEY = os.getenv('SECRET_KEY', 'my-default-secret-key')
 
+DEBUG = False
 # DEBUG = True
-DEBUG = True
 # Чтобы бэк принимал запросы из nginx добавили host.docker.internal
-ALLOWED_HOSTS = ['127.0.0.1', 'host.docker.internal', 'localhost', 'backend']
-# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+# ALLOWED_HOSTS = ['127.0.0.1', 'host.docker.internal', 'localhost', 'backend']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -70,26 +70,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
-#
-# DATABASES = {
-#     'default': {
-#         # Меняем настройку Django: теперь для работы будет использоваться
-#         # бэкенд postgresql.
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('POSTGRES_DB', 'django'),
-#         'USER': os.getenv('POSTGRES_USER', 'django'),
-#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-#         'HOST': os.getenv('DB_HOST', ''),
-#         'PORT': os.getenv('DB_PORT', 5432)
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # Меняем настройку Django: теперь для работы будет использоваться
+        # бэкенд postgresql.
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -162,27 +161,9 @@ DJOSER = {
     # Чтобы текущий пользователь мог видеть данные всех.
     'HIDE_USERS': False,
 }
-# Для проверки какие запросы идут к бд.
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "handlers": {
-#         "console": {
-#             "class": "logging.StreamHandler",
-#         },
-#     },
-#     "loggers": {
-#         "django.db.backends": {
-#             "level": "DEBUG",  # if DEBUG else 'ERROR',
-#             "handlers": [
-#                 "console",
-#             ],
-#         },
-#     },
-# }
 
-# INTERNAL_IPS = [
-#     # ...
-#     "127.0.0.1",
-#     # ...
-# ]
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]

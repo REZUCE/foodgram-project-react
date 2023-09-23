@@ -35,8 +35,8 @@ class CustomUserSerializer(UserSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.subscription.exists()
+            request.user.is_authenticated
+            and request.user.subscription.exists()
         )
 
 
@@ -77,8 +77,8 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return (
-                request.user.is_authenticated
-                and request.user.subscription.exists()
+            request.user.is_authenticated
+            and request.user.subscription.exists()
         )
 
     def get_recipes(self, obj):
@@ -148,6 +148,12 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Ingredient.objects.all(),
+                fields=('name', 'measurement_unit')
+            )
+        ]
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -194,8 +200,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.favorites.exists()
+            request.user.is_authenticated
+            and request.user.favorites.exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -206,8 +212,8 @@ class RecipesSerializer(serializers.ModelSerializer):
 
         request = self.context.get('request')
         return (
-                request.user.is_authenticated
-                and request.user.shopping_cart.exists()
+            request.user.is_authenticated
+            and request.user.shopping_cart.exists()
         )
 
 
@@ -224,13 +230,6 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ('id', 'amount', 'measurement_unit')
 
-    validators = [
-        UniqueTogetherValidator(
-            queryset=Ingredient.objects.all(),
-            fields=('name', 'measurement_unit')
-        )
-    ]
-
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор модели рецепт - для создания/обновления."""
@@ -246,15 +245,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'ingredients',
-            'tags',
-            'image',
             'name',
+            'tags',
+            'ingredients',
+            'cooking_time',
             'text',
-            'cooking_time'
+            'image',
         )
 
-    def validate_tags(self, tags):
+    def validate_tags(self, data):
+        tags = self.initial_data.get('tags')
         list_tags = []
         if not tags:
             raise serializers.ValidationError(
@@ -266,8 +266,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     'Тег должен быть уникальным.'
                 )
             list_tags.append(tag['id'])
+        return data
 
-    def validate_ingredients(self, ingredients):
+    def validate_ingredients(self, data):
+        ingredients = self.initial_data.get('tags')
         list_ingredients = []
         if not ingredients:
             raise serializers.ValidationError(
@@ -279,6 +281,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     'Ингредиент должен быть уникальным.'
                 )
             list_ingredients.append(ingredient['id'])
+        return data
 
     def validate_cooking_time(self, value):
         if not 120 >= value >= 1:
@@ -286,6 +289,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Время приготовления должно быть положительным числом '
                 'и меньше 2 часов (120 минут).'
             )
+        return value
 
     def create(self, validated_data):
         """

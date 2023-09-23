@@ -91,12 +91,13 @@ class Recipe(models.Model):
         verbose_name='Изображение',
         upload_to='recipes/images/'
     )
+
+    text = models.TextField(
+        verbose_name='Описание'
+    )
     name = models.CharField(
         verbose_name='Название',
         max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
-    )
-    text = models.TextField(
-        verbose_name='Описание'
     )
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления (в минутах)',

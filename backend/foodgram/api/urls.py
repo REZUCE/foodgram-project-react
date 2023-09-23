@@ -4,7 +4,6 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     TagViewSet, RecipeViewSet,
     CustomUserViewSet, IngredientViewSet,
-    APISubscription,
     download_shopping
 )
 
@@ -22,14 +21,7 @@ urlpatterns = [
         download_shopping,
         name='download_shopping'
     ),
-
-    path(
-        'users/<int:id>/subscribe/',
-        APISubscription.as_view(),
-        name='subscription',
-    ),
     path('auth/', include('djoser.urls.authtoken')),
-    # Подключение эндпоинтов из router
     path('', include(router.urls)),
     path('', include('djoser.urls')),
 ]

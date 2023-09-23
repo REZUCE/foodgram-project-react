@@ -15,7 +15,6 @@ from rest_framework.response import Response
 from rest_framework.status import (HTTP_201_CREATED,
                                    HTTP_400_BAD_REQUEST,
                                    HTTP_204_NO_CONTENT)
-from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from recipes.models import (Tag, Recipe, Ingredient,
@@ -27,8 +26,8 @@ from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (TagSerializer, RecipesSerializer,
-                          RecipeCreateSerializer, IngredientSerializer, ShowSubscriptionSerializer,
-                          SubscriptionSerializer,
+                          RecipeCreateSerializer, IngredientSerializer,
+                          SubscriptionSerializer, ShowSubscriptionSerializer,
                           CustomUserSerializer, ShortRecipeSerializer)
 
 
@@ -36,6 +35,38 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
     pagination_class = CustomPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=(IsAuthenticated,)
+    )
+    def subscribe(self, request, id):
+        data = {
+            'user': request.user.pk,
+            'author': id
+        }
+        if request.method == 'POST':
+            serializer = SubscriptionSerializer(
+                data=data,
+                context={'request': request}
+            )
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response(
+                    serializer.data, status=HTTP_201_CREATED)
+            return Response(status=HTTP_400_BAD_REQUEST)
+        else:
+            author = get_object_or_404(CustomUser, id=id)
+            if Subscription.objects.filter(
+                    user=request.user,
+                    author=author).exists():
+                subscription = get_object_or_404(
+                    Subscription, user=request.user, author=author
+                )
+                subscription.delete()
+                return Response(status=HTTP_204_NO_CONTENT)
+            return Response(status=HTTP_400_BAD_REQUEST)
 
     @action(
         methods=("get",),
@@ -147,39 +178,6 @@ class RecipeViewSet(ModelViewSet):
             return self.add_to_model(ShoppingCart, request.user, pk)
         else:
             return self.delete_from_model(ShoppingCart, request.user, pk)
-
-
-class APISubscription(APIView):
-    permission_classes = (IsAuthenticated,)
-    pagination_class = CustomPagination
-
-    def post(self, request, id):
-        data = {
-            'user': request.user.id,
-            'author': id
-        }
-
-        serializer = SubscriptionSerializer(
-            data=data,
-            context={'request': request}
-        )
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(
-                serializer.data, status=HTTP_201_CREATED)
-        return Response(status=HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, id):
-        author = get_object_or_404(CustomUser, id=id)
-        if Subscription.objects.filter(
-                user=request.user,
-                author=author).exists():
-            subscription = get_object_or_404(
-                Subscription, user=request.user, author=author
-            )
-            subscription.delete()
-            return Response(status=HTTP_204_NO_CONTENT)
-        return Response(status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

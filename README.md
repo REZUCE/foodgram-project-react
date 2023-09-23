@@ -1,7 +1,3 @@
-# Домен: https://foodgramlisicyn.ddns.net/
-# Админка: 
-Пароль: a
-Логин: admin@admin.ru
 # Foodgram
 ### Cоциальная сеть для обмена рецептами.
 ## Стек
@@ -14,7 +10,7 @@
 - python-dotenv==1.0.0
 - psycopg2-binary==2.9.7
 - gunicorn==21.2.0
-## Установка запуск
+## Установка и запуск на виртуальной машине.
 1. Клонирование кода приложения с GitHub.
    ```
    git clone SSH-ссылка
@@ -74,12 +70,18 @@
 6. Зайти через админку в модель Ingredient и залить туда csv с данными ингредиентов.
    Пример csv:
    ```
-   name,measurement_unit
+    name,measurement_unit
     абрикосовое варенье,г
     абрикосовое пюре,г
     абрикосовый джем,г
     абрикосовый сок,стакан
     абрикосы,г
+   ```
+## Чтобы протестировать работу сейчас:
+   ```
+    domain:https://foodgramlisicyn.ddns.net/recipes
+    login:admin@admin.ru
+    password:a
    ```
 ## Автор
 Владимир Лисицын 

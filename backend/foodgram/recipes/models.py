@@ -14,11 +14,11 @@ class Ingredient(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
+        max_length=Parameters.MAX_LEN_INT_RECIPES.value
     )
     measurement_unit = models.CharField(
         verbose_name='Единицы измерение',
-        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
+        max_length=Parameters.MAX_LEN_INT_RECIPES.value
     )
 
     class Meta:
@@ -47,11 +47,11 @@ class Tag(models.Model):
 
     name = models.CharField(
         verbose_name='Название',
-        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value,
+        max_length=Parameters.MAX_LEN_INT_RECIPES.value,
     )
     color = models.CharField(
         verbose_name='Цвет в HEX',
-        max_length=Parameters.MAX_LEN_COLOR.value
+        max_length=Parameters.MAX_LEN_INT_COLOR.value
     )
     slug = models.SlugField(
         verbose_name='Уникальный слаг',
@@ -97,7 +97,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=Parameters.MAX_LEN_CHAR_FIELD_RECIPES.value
+        max_length=Parameters.MAX_LEN_INT_RECIPES.value
     )
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления (в минутах)',

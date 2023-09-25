@@ -3,7 +3,7 @@ from djoser.serializers import UserSerializer, UserCreateSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
+from core.parametrs import Parameters
 from recipes.models import (Tag, Recipe, RecipeIngredient,
                             Ingredient, RecipeTag)
 from users.models import CustomUser
@@ -35,8 +35,8 @@ class CustomUserSerializer(UserSerializer):
         request = self.context.get('request')
 
         return (
-            request.user.is_authenticated
-            and request.user.subscription.exists()
+                request.user.is_authenticated
+                and request.user.subscription.exists()
         )
 
 
@@ -77,8 +77,8 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return (
-            request.user.is_authenticated
-            and request.user.subscription.exists()
+                request.user.is_authenticated
+                and request.user.subscription.exists()
         )
 
     def get_recipes(self, obj):
@@ -200,8 +200,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         return (
-            request.user.is_authenticated
-            and request.user.favorites.exists()
+                request.user.is_authenticated
+                and request.user.favorites.exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -212,8 +212,8 @@ class RecipesSerializer(serializers.ModelSerializer):
 
         request = self.context.get('request')
         return (
-            request.user.is_authenticated
-            and request.user.shopping_cart.exists()
+                request.user.is_authenticated
+                and request.user.shopping_cart.exists()
         )
 
 
@@ -269,7 +269,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return data
 
     def validate_ingredients(self, data):
-        ingredients = self.initial_data.get('tags')
+        ingredients = self.initial_data.get('ingredients')
         list_ingredients = []
         if not ingredients:
             raise serializers.ValidationError(
@@ -284,7 +284,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return data
 
     def validate_cooking_time(self, value):
-        if not 120 >= value >= 1:
+        if not (Parameters.VALIDATE_COOKING_TIME_MAX.value >=
+                value >= Parameters.VALIDATE_COOKING_TIME_MIN.value):
             raise serializers.ValidationError(
                 'Время приготовления должно быть положительным числом '
                 'и меньше 2 часов (120 минут).'

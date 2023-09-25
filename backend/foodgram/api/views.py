@@ -56,17 +56,16 @@ class CustomUserViewSet(UserViewSet):
                 return Response(
                     serializer.data, status=HTTP_201_CREATED)
             return Response(status=HTTP_400_BAD_REQUEST)
-        else:
-            author = get_object_or_404(CustomUser, id=id)
-            if Subscription.objects.filter(
-                    user=request.user,
-                    author=author).exists():
-                subscription = get_object_or_404(
-                    Subscription, user=request.user, author=author
-                )
-                subscription.delete()
-                return Response(status=HTTP_204_NO_CONTENT)
-            return Response(status=HTTP_400_BAD_REQUEST)
+        author = get_object_or_404(CustomUser, id=id)
+        if Subscription.objects.filter(
+                user=request.user,
+                author=author).exists():
+            subscription = get_object_or_404(
+                Subscription, user=request.user, author=author
+            )
+            subscription.delete()
+            return Response(status=HTTP_204_NO_CONTENT)
+        return Response(status=HTTP_400_BAD_REQUEST)
 
     @action(
         methods=("get",),
@@ -132,8 +131,6 @@ class RecipeViewSet(ModelViewSet):
         return RecipeCreateSerializer
 
     def perform_create(self, serializer):
-        # До создания в serializer полю author
-        # присваиваем user.
         serializer.save(author=self.request.user)
 
     def add_to_model(self, model, user, pk):
@@ -176,8 +173,7 @@ class RecipeViewSet(ModelViewSet):
     def shopping_cart(self, request, pk):
         if request.method == 'POST':
             return self.add_to_model(ShoppingCart, request.user, pk)
-        else:
-            return self.delete_from_model(ShoppingCart, request.user, pk)
+        return self.delete_from_model(ShoppingCart, request.user, pk)
 
 
 @api_view(['GET'])

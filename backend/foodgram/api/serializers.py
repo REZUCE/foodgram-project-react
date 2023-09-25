@@ -35,8 +35,8 @@ class CustomUserSerializer(UserSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.subscription.exists()
+            request.user.is_authenticated
+            and request.user.subscription.exists()
         )
 
 
@@ -77,8 +77,8 @@ class ShowSubscriptionSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         return (
-                request.user.is_authenticated
-                and request.user.subscription.exists()
+            request.user.is_authenticated
+            and request.user.subscription.exists()
         )
 
     def get_recipes(self, obj):
@@ -200,8 +200,8 @@ class RecipesSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.favorites.exists()
+            request.user.is_authenticated
+            and request.user.favorites.exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -212,8 +212,8 @@ class RecipesSerializer(serializers.ModelSerializer):
 
         request = self.context.get('request')
         return (
-                request.user.is_authenticated
-                and request.user.shopping_cart.exists()
+            request.user.is_authenticated
+            and request.user.shopping_cart.exists()
         )
 
 
@@ -284,8 +284,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return data
 
     def validate_cooking_time(self, value):
-        if not (Parameters.VALIDATE_COOKING_TIME_MAX.value >=
-                value >= Parameters.VALIDATE_COOKING_TIME_MIN.value):
+        if not (
+            Parameters.VALIDATE_COOKING_TIME_MAX.value
+            >= value >= Parameters.VALIDATE_COOKING_TIME_MIN.value
+        ):
             raise serializers.ValidationError(
                 'Время приготовления должно быть положительным числом '
                 'и меньше 2 часов (120 минут).'
